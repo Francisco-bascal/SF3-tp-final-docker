@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - MediClock</title>
+    <style>
+        body { font-family: sans-serif; margin: 2rem; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: .4rem .6rem; text-align: left; }
+        th { background: #f0f0f0; }
+        .error { color: #a00; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <nav><a href="/">Inicio</a> | <a href="/Eventos">Eventos</a></nav>
+    <hr />
+    @RenderBody()
+</body>
+</html>

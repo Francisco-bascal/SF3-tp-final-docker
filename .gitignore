@@ -1,0 +1,30 @@
+# Secretos y configuracion local (nunca subir)
+.env
+.env.*
+!.env.example
+credenciales*.json
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.log
+
+# IDE y herramientas
+.idea/
+.vscode/
+.claude/
+
+# Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Datos locales de contenedores (si se montaran como carpetas)
+postgres_datos/
+pgadmin_datos/
+n8n_datos/
+mosquitto_datos/
+portainer_datos/

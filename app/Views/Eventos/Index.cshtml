@@ -1,0 +1,35 @@
+@model List<EventoDto>
+@{
+    ViewData["Title"] = "Eventos";
+}
+<h1>Eventos del dispensador</h1>
+
+@if (ViewBag.MensajeError != null)
+{
+    <p class="error">@ViewBag.MensajeError</p>
+}
+else if (!Model.Any())
+{
+    <p>No hay eventos registrados.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr><th>Id</th><th>Dispositivo</th><th>Tipo</th><th>Detalle</th><th>Cantidad</th><th>Fecha</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var evento in Model)
+        {
+            <tr>
+                <td>@evento.Id</td>
+                <td>@evento.Dispositivo</td>
+                <td>@evento.TipoEvento</td>
+                <td>@evento.Detalle</td>
+                <td>@evento.Cantidad</td>
+                <td>@evento.CreadoEn.ToString("yyyy-MM-dd HH:mm:ss")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

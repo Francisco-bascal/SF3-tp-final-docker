@@ -1,0 +1,228 @@
+{
+  "id": "wfMqttEventos001",
+  "name": "MQTT - Registrar evento (request/reply)",
+  "nodes": [
+    {
+      "parameters": {
+        "topics": "lab/g1/req/eventos.create",
+        "options": {
+          "jsonParseBody": true,
+          "onlyMessage": false
+        }
+      },
+      "id": "mqtt-trigger",
+      "name": "Solicitud MQTT",
+      "type": "n8n-nodes-base.mqttTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "credentials": {
+        "mqtt": {
+          "id": "cred-mqtt-mosquitto",
+          "name": "Mosquitto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const PREFIJO_RESPUESTAS = 'lab/g1/res/';\nconst TIPOS = ['dispensado', 'omitido', 'alarma', 'error'];\nconst mensaje = $json.message && typeof $json.message === 'object' ? $json.message : {};\nconst datos = mensaje.data && typeof mensaje.data === 'object' ? mensaje.data : {};\nconst errores = [];\n\nconst textoValido = (valor, max) => typeof valor === 'string' && valor.trim() !== '' && valor.length <= max;\n\nconst correlationId = textoValido(mensaje.correlation_id, 100) ? mensaje.correlation_id : null;\nif (!correlationId) errores.push('correlation_id es obligatorio');\n\nlet replyTo = mensaje.reply_to;\nconst replyToValido = textoValido(replyTo, 200)\n  && replyTo.startsWith(PREFIJO_RESPUESTAS)\n  && !/[+#]/.test(replyTo);\nif (!replyToValido) {\n  errores.push('reply_to debe comenzar con ' + PREFIJO_RESPUESTAS);\n  replyTo = PREFIJO_RESPUESTAS + 'errores/' + (correlationId ?? 'sin-id');\n}\n\nif (!textoValido(datos.dispositivo, 50)) errores.push('data.dispositivo es obligatorio (texto de hasta 50 caracteres)');\nif (!TIPOS.includes(datos.tipo_evento)) errores.push('data.tipo_evento debe ser uno de: ' + TIPOS.join(', '));\nif (datos.detalle !== undefined && datos.detalle !== null && (typeof datos.detalle !== 'string' || datos.detalle.length > 200)) errores.push('data.detalle debe ser texto de hasta 200 caracteres');\nconst cantidad = datos.cantidad === undefined ? 1 : datos.cantidad;\nif (!Number.isInteger(cantidad) || cantidad <= 0) errores.push('data.cantidad debe ser un entero mayor a 0');\n\nreturn {\n  json: {\n    valido: errores.length === 0,\n    errores,\n    correlation_id: correlationId,\n    reply_to: replyTo,\n    dispositivo: datos.dispositivo,\n    tipo_evento: datos.tipo_evento,\n    detalle: datos.detalle ?? null,\n    cantidad,\n  },\n};"
+      },
+      "id": "mqtt-validar",
+      "name": "Validar solicitud",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condicion-valido",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "mqtt-si",
+      "name": "¿Datos válidos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO eventos_dispensador (dispositivo, tipo_evento, detalle, cantidad) VALUES ($1, $2, $3, $4) RETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [$('Validar solicitud').item.json.dispositivo, $('Validar solicitud').item.json.tipo_evento, $('Validar solicitud').item.json.detalle, $('Validar solicitud').item.json.cantidad] }}"
+        }
+      },
+      "id": "mqtt-pg",
+      "name": "Insertar en PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        720,
+        100
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "cred-postgres-n8n",
+          "name": "Postgres MediClock (n8n_user)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const validado = $('Validar solicitud').item.json;\nreturn {\n  json: {\n    topic: validado.reply_to,\n    payload: {\n      ok: true,\n      correlation_id: validado.correlation_id,\n      result: { id: $json.id, status: 'created' },\n    },\n  },\n};"
+      },
+      "id": "mqtt-ok",
+      "name": "Armar respuesta OK",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\n  json: {\n    topic: $json.reply_to,\n    payload: {\n      ok: false,\n      correlation_id: $json.correlation_id,\n      errors: $json.errores,\n    },\n  },\n};"
+      },
+      "id": "mqtt-error",
+      "name": "Armar respuesta de error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "topic": "={{ $json.topic }}",
+        "sendInputData": false,
+        "message": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
+      },
+      "id": "mqtt-publicar",
+      "name": "Publicar respuesta MQTT",
+      "type": "n8n-nodes-base.mqtt",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        200
+      ],
+      "credentials": {
+        "mqtt": {
+          "id": "cred-mqtt-mosquitto",
+          "name": "Mosquitto"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Solicitud MQTT": {
+      "main": [
+        [
+          {
+            "node": "Validar solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar solicitud": {
+      "main": [
+        [
+          {
+            "node": "¿Datos válidos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Datos válidos?": {
+      "main": [
+        [
+          {
+            "node": "Insertar en PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar respuesta de error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insertar en PostgreSQL": {
+      "main": [
+        [
+          {
+            "node": "Armar respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar respuesta OK": {
+      "main": [
+        [
+          {
+            "node": "Publicar respuesta MQTT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar respuesta de error": {
+      "main": [
+        [
+          {
+            "node": "Publicar respuesta MQTT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true
+}
