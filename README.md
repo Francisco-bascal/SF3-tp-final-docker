@@ -78,7 +78,7 @@ copy .env.example .env
 | Contraseña de pgAdmin | `cambiar_pgadmin` |
 | Contraseña de la base de datos (usuario `admin`) | `cambiar_admin` |
 
-> No cambiar usuarios ni contraseñas del `.env` después del primer arranque: la base de datos los guarda la primera vez. Si hace falta cambiarlos, hay que borrar todo (ver sección 5).
+> No cambiar usuarios ni contraseñas del `.env` *después del primer arranque*: la base de datos los guarda la primera vez. Si hace falta cambiarlos, hay que borrar todo (ver sección 5).
 
 ### 3.3. Configurar los nombres de las direcciones (archivo `hosts`)
 
@@ -96,7 +96,7 @@ Para comprobar (en cualquier PowerShell):
 ping app.lab.test -n 1
 ```
 
-**Resultado esperado:** una línea `Respuesta desde 127.0.0.1`. Hacerlo una sola vez por computadora. Si se ejecuta dos veces no pasa nada grave (queda la línea repetida).
+**Resultado esperado:** una línea `Respuesta desde 127.0.0.1`. Hacerlo una sola vez por computadora.
 
 ### 3.4. Construir e iniciar la plataforma
 
@@ -245,7 +245,7 @@ docker compose exec mosquitto mosquitto_pub -t lab/g1/req/eventos.create -f /pru
 **Resultado esperado en la Ventana 1** (el `id` es el del registro creado):
 
 ```
-lab/g1/res/eventos/req-001 {"ok":true,"correlation_id":"req-001","result":{"id":9,"status":"created"}}
+lab/g1/res/eventos/req-001 {"ok":true,"correlation_id":"req-001","result":{"id":*Número*,"status":"created"}}
 ```
 
 Comprobar que `correlation_id` es `req-001`, igual al enviado. Recargar `http://app.lab.test:8080/Eventos`: aparece el evento "Alarma de las 12:00".
@@ -290,7 +290,9 @@ docker compose ps
    docker compose ps
    docker compose logs n8n --tail 20
    ```
+4. Listo. Funcionó todo.
 
+### En caso de problemas:
 ## 5. Detener, reiniciar y borrar todo
 
 **Dónde:** PowerShell normal, en la carpeta raíz del proyecto.
