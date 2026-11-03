@@ -1,0 +1,1 @@
+{"correlation_id":"req-001","reply_to":"lab/g1/res/eventos/req-001","data":{"dispositivo":"mediclock-01","tipo_evento":"alarma","detalle":"Alarma de las 12:00","cantidad":1}}

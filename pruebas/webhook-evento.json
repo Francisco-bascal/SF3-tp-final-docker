@@ -1,0 +1,6 @@
+{
+  "dispositivo": "mediclock-01",
+  "tipo_evento": "dispensado",
+  "detalle": "Toma de las 08:00",
+  "cantidad": 2
+}

@@ -1,40 +1,52 @@
-# Prueba 2: Webhook HTTP
+# Prueba del webhook HTTP
+
+Todos los comandos se ejecutan en **PowerShell normal**, dentro de la carpeta raíz del proyecto (la que contiene `docker-compose.yml`). Requieren que el archivo `hosts` tenga los nombres `lab.test` (ver README).
 
 Endpoint: `POST http://n8n.lab.test:8080/webhook/eventos`
 
-Si el archivo `hosts` ya tiene los nombres `lab.test`, se puede omitir `--resolve`.
+Importante: en PowerShell hay que escribir `curl.exe` (con `.exe`). Sin eso, PowerShell usa otro comando distinto.
 
-## Solicitud válida (201)
+Los cuerpos de ejemplo ya están en el repositorio:
 
-Guardar el cuerpo en un archivo `evento.json`:
+| Archivo | Contenido |
+|---|---|
+| `pruebas/webhook-evento.json` | Evento válido |
+| `pruebas/webhook-invalido.json` | Evento inválido (`tipo_evento` inexistente y `cantidad` 0) |
+| `pruebas/datos.json` | Lista de 8 eventos para cargar de una sola vez |
 
-```json
-{"dispositivo":"mediclock-01","tipo_evento":"dispensado","detalle":"Toma de las 08:00","cantidad":2}
-```
-
-```bash
-curl --resolve n8n.lab.test:8080:127.0.0.1 -X POST "http://n8n.lab.test:8080/webhook/eventos" -H "Content-Type: application/json" -d @evento.json
-```
-
-Respuesta esperada (HTTP 201):
-
-```json
-{"ok":true,"result":{"id":2,"status":"created"}}
-```
-
-## Solicitud inválida (400)
+## Caso 1: evento válido (HTTP 201)
 
 ```bash
-curl --resolve n8n.lab.test:8080:127.0.0.1 -X POST "http://n8n.lab.test:8080/webhook/eventos" -H "Content-Type: application/json" -d "{}"
+curl.exe -X POST http://n8n.lab.test:8080/webhook/eventos -H "Content-Type: application/json" -d "@pruebas/webhook-evento.json" -w " HTTP %{http_code}"
 ```
 
-Respuesta esperada (HTTP 400):
+Resultado esperado:
 
-```json
-{"ok":false,"errors":["dispositivo es obligatorio (texto de hasta 50 caracteres)","tipo_evento debe ser uno de: dispensado, omitido, alarma, error"]}
 ```
+{"ok":true,"result":{"id":1,"status":"created"}} HTTP 201
+```
+
+## Caso 2: evento inválido (HTTP 400)
+
+```bash
+curl.exe -X POST http://n8n.lab.test:8080/webhook/eventos -H "Content-Type: application/json" -d "@pruebas/webhook-invalido.json" -w " HTTP %{http_code}"
+```
+
+Resultado esperado:
+
+```
+{"ok":false,"errors":["tipo_evento debe ser uno de: dispensado, omitido, alarma, error","cantidad debe ser un entero mayor a 0"]} HTTP 400
+```
+
+## Caso 3: cargar los 8 eventos de ejemplo
+
+```bash
+powershell -ExecutionPolicy Bypass -File .\pruebas\cargar-datos.ps1
+```
+
+Resultado esperado: ocho líneas terminadas en `HTTP 201` y el mensaje final `Se cargaron 8 eventos`.
 
 ## Verificar
 
-- Aplicación web: `http://app.lab.test:8080/Eventos` muestra el registro nuevo.
+- Aplicación web: `http://app.lab.test:8080/Eventos`
 - pgAdmin: `http://db.lab.test:8080`, tabla `eventos_dispensador`.
