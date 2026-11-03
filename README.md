@@ -4,7 +4,10 @@ Trabajo Práctico Integrador Final - Software Factory 3 (ITES 2026).
 
 ## Integrantes
 
-- _Completar: nombre y apellido de cada integrante del grupo._
+Bascal Francisco Emanuel
+Fuentes Facundo Demian
+Alzuri Luciana Aymara
+Díaz Ignacio
 
 ## Objetivo y caso de uso
 
@@ -36,7 +39,7 @@ Recorridos:
 - `red_backend`: postgres, mosquitto, portainer y los servicios que los usan. PostgreSQL y Mosquitto no son alcanzables desde el proxy: se separan para que el único camino HTTP hacia el exterior sea el proxy.
 - Volúmenes: `postgres_datos`, `pgadmin_datos`, `n8n_datos`, `mosquitto_datos`, `portainer_datos`.
 
-### Roles de base de datos
+### Roles de base de datos y Permisos
 
 | Rol | Permisos | Usado por |
 |---|---|---|
@@ -152,6 +155,16 @@ La primera vez pide crear el usuario administrador (hacerlo en los primeros minu
 
 - MQTT request/reply: [pruebas/mqtt.md](pruebas/mqtt.md)
 - Webhook HTTP: [pruebas/webhook.md](pruebas/webhook.md)
+
+### Carga de datos de ejemplo
+
+`pruebas/datos.json` contiene 8 eventos. Este script los envía uno por uno al webhook de n8n (cada uno debe responder `HTTP 201`):
+
+```bash
+powershell -ExecutionPolicy Bypass -File .\pruebas\cargar-datos.ps1
+```
+
+Luego se ven en `http://app.lab.test:8080/Eventos`. Si el proxy usa otro puerto: `-Puerto 8081`.
 
 ### Persistencia
 

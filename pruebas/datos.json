@@ -1,0 +1,10 @@
+[
+  { "dispositivo": "mediclock-01", "tipo_evento": "dispensado", "detalle": "Toma de las 08:00", "cantidad": 2 },
+  { "dispositivo": "mediclock-01", "tipo_evento": "dispensado", "detalle": "Toma de las 14:00", "cantidad": 1 },
+  { "dispositivo": "mediclock-01", "tipo_evento": "omitido", "detalle": "Toma de las 20:00 no retirada", "cantidad": 1 },
+  { "dispositivo": "mediclock-01", "tipo_evento": "alarma", "detalle": "Alarma de las 08:00", "cantidad": 1 },
+  { "dispositivo": "mediclock-02", "tipo_evento": "dispensado", "detalle": "Toma de las 09:30", "cantidad": 3 },
+  { "dispositivo": "mediclock-02", "tipo_evento": "error", "detalle": "Motor stepper atascado", "cantidad": 1 },
+  { "dispositivo": "mediclock-02", "tipo_evento": "alarma", "detalle": "Compartimento vacio", "cantidad": 1 },
+  { "dispositivo": "mediclock-03", "tipo_evento": "dispensado", "detalle": "Toma de las 13:00", "cantidad": 2 }
+]
